@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image editor</title>
+    <link rel="stylesheet" href="{{ url_for('static', type='text/css', filename='css/styles.css') }}">
+</head>
+<body>
+  <input id="token-input" type="hidden" name="token" value={{token}}>
+  <div class="container">
+    <div class="upload-field">
+      <div class="right-div">
+      </div>
+
+      <div class="left-div">
+        <button onclick="invertImage()">Invert image</button>
+      </div>
+
+      <div class="image-upload">
+      <label for="image-upload">Click to choose the image:</label><br>
+    
+      </div>
+      <input type="file" name="file" id="image-upload" accept="image/*">
+      <br>
+      <img id="preview-image" src="#"  style="max-width: 100%; max-height: 80%;">
+    </form>
+    </div>
+
+  </div>
+  <a class="download" href="/static/images/image.png" download>
+    Click to download the image!
+  </a>
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,43 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 95vh;
+  background-color: gray;
+}
+
+.upload-field {
+  
+  width: 90%;
+  height: 80%;
+  padding: 20px;
+  border: 1px solid #ccc;
+  text-align: center;
+  background-color: silver;
+  
+}
+
+.upload-field input[type="file"] {
+  display: none;
+}
+.right-div {
+  background-color: ghostwhite;
+  float: right;
+  width: 20%;
+  height: 100%;
+}
+.left-div {
+  background-color: ghostwhite;
+  float: left;
+  width: 20%;
+  height: 100%;
+}
+.image-upload {
+  background-color: ghostwhite;
+  font-weight: bold;
+}
+.download {
+  background-color: ghostwhite;
+  font-weight: bold;
+  text-align: center;
+}
