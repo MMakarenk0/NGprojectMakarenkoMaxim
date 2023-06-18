@@ -5,8 +5,6 @@ from flask_cors import CORS
 import os
 import time
 
-
-
 app = Flask("Ajax_server")
 
 CORS(app)
@@ -32,12 +30,15 @@ def uploadFile():
 
 @app.route('/invertImage', methods=['POST'])
 def invertImage():
-    startTime = time.time()
+    # startTime = time.time()
     token = request.form.get('token')
     filePath = f"../Frontend/static/images/{token}.png"
-    img = Image.open(filePath).convert('RGBA')
-    threadManager(threadNumber=4, func=invertColors, args=(img, filePath))
-    print(time.time()-startTime)
+    img = Image.open(filePath).convert('RGB')
+    imageParts, width, height = cropImage(img)
+    threadManager(threadNumber=4, func=invertColors, args=(imageParts,))
+    mergeImage(filePath, imageParts, width, height)
+    # print(time.time()-startTime)
+
     return f"/static/images/{token}.png"
 
 tokens = {}    
