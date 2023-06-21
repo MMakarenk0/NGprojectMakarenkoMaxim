@@ -1,8 +1,8 @@
 from PIL import Image, ImageOps
 import threading
 
-def invertColors(imgs, threadIndex):
-    imgs[threadIndex] = ImageOps.invert(imgs[threadIndex])
+def invertColors(imageParts, threadIndex):
+    imageParts[threadIndex] = ImageOps.invert(imageParts[threadIndex])
 
 def threadManager(threadNumber, func, args):
     threads = []
@@ -53,4 +53,21 @@ def mergeImage(savePath, imageParts, width, height):
     merged_image.paste(imageParts[3], (midpoint_x, midpoint_y))
 
     merged_image.save(savePath)
+
+def colorOffset(pixelValue, offset):
+    return pixelValue + offset
+
+def imageColorShift(imageParts, RGBoffset, threadIndex):
+    r, g, b = imageParts[threadIndex].split()
+    rgbList = [r, g, b]
+    for index in range(3):
+        if RGBoffset[index] != 0:
+            rgbList[index] = rgbList[index].point(lambda pixelValue: colorOffset(pixelValue, RGBoffset[index]))
+    
+    imageParts[threadIndex] = Image.merge("RGB", (rgbList[0], rgbList[1], rgbList[2]))
+    
+    
+
+
+
 
