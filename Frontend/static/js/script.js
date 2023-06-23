@@ -168,3 +168,26 @@ input_B.addEventListener('input', function() {
     xhttp.send(formData);
   }, 500);
 });
+
+function sumbitOffset() {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append("token", token);
+  
+  
+  const xhttp = new XMLHttpRequest();
+  xhttp.onload = function() {
+    if (xhttp.status === 200) {
+      console.log("Request successful");
+      var response = xhttp.responseText;
+
+      document.getElementById("R-input").value = "";
+      document.getElementById("G-input").value = "";
+      document.getElementById("B-input").value = "";
+
+      document.getElementById("preview-image").src = response + "?" + new Date().getTime();
+    }
+  }
+  xhttp.open("POST", "http://192.168.1.104:8083/submitOffset", true);
+  xhttp.send(formData);
+}

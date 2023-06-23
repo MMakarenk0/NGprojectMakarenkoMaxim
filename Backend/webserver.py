@@ -1,5 +1,6 @@
 from flask import Flask, make_response, redirect, request
 from datetime import datetime, timedelta
+import shutil
 from imageWorker import *
 from flask_cors import CORS
 import os
@@ -92,6 +93,17 @@ def colorshift():
 
     # print(time.time()-startTime)
 
-    return f"/static/images/{token}.bmp"
+    return f"/static/preview_images/{token}.bmp"
+
+@app.route('/submitOffset', methods=['POST'])
+def sumbitOffset():
+    token = request.form.get('token')
+    if os.path.exists(f'../Frontend/static/images/{token}.bmp'):
+        os.remove(f'../Frontend/static/images/{token}.bmp')
+        shutil.move(f"../Frontend/static/preview_images/{token}.bmp", "../Frontend/static/images/")
+        return f'/static/images/{token}.bmp'
+    else:
+        return "File not found"
+    
 
 app.run(host="0.0.0.0", port=8083, debug=True)
