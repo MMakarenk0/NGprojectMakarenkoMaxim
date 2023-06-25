@@ -44,15 +44,16 @@ def cropImage(img):
     return imageParts, width, height
 
 def mergeImage(savePath, imageParts, width, height):
-    merged_image = Image.new('RGB', (width, height))
+    MergedImage = Image.new('RGB', (width, height))
     midpoint_x, midpoint_y = getMidpoints(width, height)
 
-    merged_image.paste(imageParts[0], (0, 0))
-    merged_image.paste(imageParts[1], (midpoint_x, 0))
-    merged_image.paste(imageParts[2], (0, midpoint_y))
-    merged_image.paste(imageParts[3], (midpoint_x, midpoint_y))
+    MergedImage.paste(imageParts[0], (0, 0))
+    MergedImage.paste(imageParts[1], (midpoint_x, 0))
+    MergedImage.paste(imageParts[2], (0, midpoint_y))
+    MergedImage.paste(imageParts[3], (midpoint_x, midpoint_y))
 
-    merged_image.save(savePath)
+    MergedImage.save(savePath)
+    return MergedImage
 
 def colorOffset(pixelValue, offset):
     return pixelValue + offset
@@ -66,8 +67,13 @@ def imageColorShift(imageParts, RGBoffset, threadIndex):
     
     imageParts[threadIndex] = Image.merge("RGB", (rgbList[0], rgbList[1], rgbList[2]))
     
-    
+def createActionHistory(token, undoHistory, redoHistory):
+    if token not in undoHistory.keys():
+        undoHistory[token] = []
+        redoHistory[token] = []
 
-
+def updateHistory(token, undoHistory, redoHistory, image):
+    undoHistory[token].append(image.copy())
+    redoHistory[token] = []
 
 
