@@ -28,7 +28,7 @@ document.getElementById("image-upload").addEventListener("change", function(even
           console.log("File successfully uploaded to the server.");
           var response = xhttp.responseText;
         } else {
-          console.log("Error uploading file to the server:", xhttp.status);
+          console.error('Request failed. Error code: ' + xhttp.status);
         }
       };
 
@@ -75,6 +75,8 @@ function extendLifeTime() {
     if (xhttp.status === 200) {
       console.log("Life time extended");
       var response = xhttp.responseText;
+    }else {
+      console.error('Request failed. Error code: ' + xhttp.status);
     }
   }
   xhttp.open("POST", "http://192.168.1.104:8083/extendLifeTime", true);
@@ -87,16 +89,30 @@ window.setInterval(() => {
 
 let timeoutId;
 
-const input_R = document.getElementById('R-input');
-input_R.addEventListener('input', function() {
+const redInput = document.getElementById('R-input');
+const greenInput = document.getElementById('G-input');
+const blueInput = document.getElementById('B-input');
+
+redInput.addEventListener('input', offsetRequest);
+greenInput.addEventListener('input', offsetRequest);
+blueInput.addEventListener('input', offsetRequest);
+
+function offsetRequest() {
+  
   clearTimeout(timeoutId);
 
   timeoutId = setTimeout(function() {
-    const value_R = input_R.value;
+    const redValue = redInput.value;
+    const greenValue = greenInput.value;
+    const blueValue = blueInput.value;
+
     const token = getToken();
+
     const formData = new FormData();
     formData.append("token", token);
-    formData.append("value_R", value_R);
+    formData.append("value_R", redValue);
+    formData.append("value_G", greenValue);
+    formData.append("value_B", blueValue);
 
     const xhttp = new XMLHttpRequest();
     xhttp.onload = function() {
@@ -112,62 +128,10 @@ input_R.addEventListener('input', function() {
     xhttp.open("POST", "http://192.168.1.104:8083/colorshift", true);
     xhttp.send(formData);
   }, 500);
-});
 
-const input_G = document.getElementById('G-input');
-input_G.addEventListener('input', function() {
-  clearTimeout(timeoutId);
-
-  timeoutId = setTimeout(function() {
-    const value_G = input_G.value;
-    const token = getToken();
-    const formData = new FormData();
-    formData.append("token", token);
-    formData.append("value_G", value_G);
-
-    const xhttp = new XMLHttpRequest();
-    xhttp.onload = function() {
-      if (xhttp.status === 200) {
-        console.log('Request successful');
-        var response = xhttp.responseText;
-
-        document.getElementById("preview-image").src = response + "?" + new Date().getTime();
-      } else {
-        console.error('Request failed. Error code: ' + xhttp.status);
-      }
-    }
-    xhttp.open("POST", "http://192.168.1.104:8083/colorshift", true);
-    xhttp.send(formData);
-  }, 500);
-});
+}
 
 
-const input_B = document.getElementById('B-input');
-input_B.addEventListener('input', function() {
-  clearTimeout(timeoutId);
-
-  timeoutId = setTimeout(function() {
-    const value_B = input_B.value;
-    const token = getToken();
-    const formData = new FormData();
-    formData.append("token", token);
-    formData.append("value_B", value_B);
-
-    const xhttp = new XMLHttpRequest();
-    xhttp.onload = function() {
-      if (xhttp.status === 200) {
-        console.log('Request successful');
-        var response = xhttp.responseText;
-
-        document.getElementById("preview-image").src = response + "?" + new Date().getTime();
-      } else {
-        console.error('Request failed. Error code: ' + xhttp.status);
-      }
-    }
-    xhttp.open("POST", "http://192.168.1.104:8083/colorshift", true);
-    xhttp.send(formData);
-  }, 500);
-});
 
 function sumbitOffset() {
   const token = getToken();
@@ -186,8 +150,64 @@ function sumbitOffset() {
       document.getElementById("B-input").value = "";
 
       document.getElementById("preview-image").src = response + "?" + new Date().getTime();
+    }else {
+      console.error('Request failed. Error code: ' + xhttp.status);
     }
   }
   xhttp.open("POST", "http://192.168.1.104:8083/submitOffset", true);
   xhttp.send(formData);
 }
+
+function undo() {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append("token", token);
+  
+  
+  const xhttp = new XMLHttpRequest();
+  xhttp.onload = function() {
+    if (xhttp.status === 200) {
+      console.log("Request successful");
+      var response = xhttp.responseText;
+      document.getElementById("preview-image").src = response + "?" + new Date().getTime();
+    }else {
+      console.error('Request failed. Error code: ' + xhttp.status);
+    }
+  }
+  xhttp.open("POST", "http://192.168.1.104:8083/undo", true);
+  xhttp.send(formData);
+}
+
+function redo() {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append("token", token);
+  
+  
+  const xhttp = new XMLHttpRequest();
+  xhttp.onload = function() {
+    if (xhttp.status === 200) {
+      console.log("Request successful");
+      var response = xhttp.responseText;
+      document.getElementById("preview-image").src = response + "?" + new Date().getTime();
+    }else {
+      console.error('Request failed. Error code: ' + xhttp.status);
+    }
+  }
+  xhttp.open("POST", "http://192.168.1.104:8083/redo", true);
+  xhttp.send(formData);
+}
+
+
+document.addEventListener('keydown', function(event) {
+  if (event.ctrlKey && event.key === 'z') {
+    undo();
+  }
+});
+
+document.addEventListener('keydown', function(event) {
+  if (event.ctrlKey && event.key === 'y') {
+    redo();
+  }
+});
+
