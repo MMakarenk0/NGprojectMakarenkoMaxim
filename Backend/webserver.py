@@ -6,9 +6,15 @@ from flask_cors import CORS
 import os
 import time
 
+
 app = Flask("Ajax_server")
 
 CORS(app)
+
+undoHistory = {}
+redoHistory = {}
+tokens = {}    
+usersShifts = {}   
 
 @app.route('/')
 def index():
@@ -21,11 +27,16 @@ def uploadFile():
 
     token = request.form.get('token')
     file = request.files['file']
+    createActionHistory(token, undoHistory, redoHistory)
 
     if file.filename == '':
         return 'No selected file', 400
 
     file.save(f'../Frontend/static/images/{token}.bmp')
+    filePath = f"../Frontend/static/images/{token}.bmp"
+    img = Image.open(filePath).convert('RGB')
+    updateHistory(token, undoHistory, redoHistory, img.copy())
+
 
     return redirect('/', 302)
 
@@ -33,16 +44,17 @@ def uploadFile():
 def invertImage():
     # startTime = time.time()
     token = request.form.get('token')
+    createActionHistory(token, undoHistory, redoHistory)
+
     filePath = f"../Frontend/static/images/{token}.bmp"
     img = Image.open(filePath).convert('RGB')
     imageParts, width, height = cropImage(img)
     threadManager(threadNumber=4, func=invertColors, args=(imageParts,))
-    mergeImage(filePath, imageParts, width, height)
+    mergedImage = mergeImage(filePath, imageParts, width, height)
+    updateHistory(token, undoHistory, redoHistory, mergedImage.copy())
     # print(time.time()-startTime)
 
-    return f"/static/images/{token}.bmp"
-
-tokens = {}    
+    return f"/static/images/{token}.bmp" 
     
 @app.route('/extendLifeTime', methods=['POST'])
 def extendTime():
@@ -65,8 +77,6 @@ def extendTime():
 
     return 'Time extended'  
 
-usersShifts = {}   
-
 @app.route('/colorshift', methods=['POST'])
 def colorshift():
     token = request.form.get('token')   
@@ -81,6 +91,9 @@ def colorshift():
     value_B = request.form.get('value_B')
     if value_B:
         usersShifts[token][2] = int(value_B)
+
+    createActionHistory(token, undoHistory, redoHistory)
+    
     
     # startTime = time.time()
 
@@ -89,8 +102,8 @@ def colorshift():
     img = Image.open(filePath).convert('RGB')
     imageParts, width, height = cropImage(img)
     threadManager(threadNumber=4, func=imageColorShift, args=(imageParts, usersShifts[token],))
-    mergeImage(previewPath, imageParts, width, height)
-
+    mergedImage = mergeImage(previewPath, imageParts, width, height)
+    updateHistory(token, undoHistory, redoHistory, mergedImage.copy())
     # print(time.time()-startTime)
 
     return f"/static/preview_images/{token}.bmp"
@@ -104,6 +117,33 @@ def sumbitOffset():
         return f'/static/images/{token}.bmp'
     else:
         return "File not found"
-    
 
+@app.route('/undo', methods=['POST'])
+def undo():
+    token = request.form.get('token')
+    filePath = f"../Frontend/static/images/{token}.bmp"
+    
+    if token in undoHistory and len(undoHistory[token]) >= 2:
+        previous_image = undoHistory[token][-2].copy()
+        
+        previous_image.save(filePath)
+        
+        redoHistory[token].append(undoHistory[token].pop())
+        
+    return f"/static/images/{token}.bmp"
+
+@app.route('/redo', methods=['POST'])
+def redo():
+    token = request.form.get('token')
+    filePath = f"../Frontend/static/images/{token}.bmp"
+    
+    if token in redoHistory and len(redoHistory[token]) >= 1:
+        next_image = redoHistory[token].pop()
+
+        next_image.save(filePath)
+        
+        undoHistory[token].append(next_image.copy())
+        
+    return f"/static/images/{token}.bmp"
+    
 app.run(host="0.0.0.0", port=8083, debug=True)
