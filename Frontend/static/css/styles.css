@@ -41,3 +41,7 @@
   font-weight: bold;
   text-align: center;
 }
+.download[disabled] {
+  pointer-events: none; 
+  opacity: 0.5; 
+}
