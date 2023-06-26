@@ -79,10 +79,10 @@ def extendTime():
 
 @app.route('/colorshift', methods=['POST'])
 def colorshift():
-    token = request.form.get('token')   
+    token = request.form.get('token')  
     if token not in usersShifts.keys():   
         usersShifts[token] = [0, 0, 0]
-    value_R = request.form.get('value_R')   
+    value_R = request.form.get('value_R')
     if value_R:
         usersShifts[token][0] = int(value_R)
     value_G = request.form.get('value_G')   
@@ -146,4 +146,13 @@ def redo():
         
     return f"/static/images/{token}.bmp"
     
+@app.route('/saveImage', methods=['POST'])
+def saveImage():
+    token = request.form.get('token')
+    extension = request.form.get('extension')
+
+    savedImage = Image.open(f"../Frontend/static/images/{token}.bmp")
+    savedImage.save(f"../Frontend/static/savedImages/{token}.{extension}", extension)
+    return f"static/savedImages/{token}.{extension}"
+
 app.run(host="0.0.0.0", port=8083, debug=True)
