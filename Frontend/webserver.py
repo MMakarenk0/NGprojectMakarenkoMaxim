@@ -3,8 +3,6 @@ import string
 import secrets
 import os
 
-
-
 app = Flask("Frontend", template_folder='Frontend/Templates', static_folder='Frontend/static')
 app.config['STATIC_FOLDER'] = 'static'
 
