@@ -12,9 +12,7 @@
   <div class="container">
     <div class="upload-field">
       <div class="right-div">
-        <a class="download" href="" download>
-          Click to download the image!
-        </a><br><br>
+        <br><br>
         <input id="extension-input" type="text" placeholder="Enter image extension"> 
         <div id="ext-input-status"></div>
         <br><br>
@@ -22,8 +20,12 @@
           Available extensions:<br>
         </div>
         <div id="available-extensions">
-          .png, .jpg, .jpeg, .bmp, .tiff, .tif, .ico, .webp, .pbm, .pgm, .ppm, .xbm, .xv, .ras, .sr, .tga, .pcx, .eps, .ps, .psd, .tga<br>
+          png, jpg, jpeg, bmp, tiff, tif, ico, webp, pbm, pgm, ppm, xbm, xv, ras, sr, tga, pcx, eps, ps, psd, tga<br>
         </div>
+        <br>
+        <a id="downloadLink" class="download" href="" download>
+          Click to download the image!<br>
+        </a>
       </div>
 
       <div class="left-div">
@@ -50,7 +52,6 @@
   </div>
   
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-
 
 </body>
 </html>
