@@ -17,13 +17,137 @@ function sendAPI(url, sendFunction, answerFunction) {
 }
 
 function imageExists() {
-  const image = document.getElementById("preview-image").src
-  if (image !== "http://127.0.0.1:8081/") {
+  const image = document.getElementById("preview-image").currentSrc;
+  if (image) {
     return true;
   }else {
     return false;
   }
 }
+
+function extendLifeTime() {
+  sendAPI("http://127.0.0.1:8083/extendLifeTime",
+  function() {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append("token", token);
+    return formData;
+  }, function(xhttp) {
+    if (xhttp.status === 200) {
+      console.log("Life time extended");
+    }else {
+      console.error('Request failed. Error code: ' + xhttp.status);
+    }
+  }
+)}
+  
+window.setInterval(() => {
+  extendLifeTime();
+}, 60000);
+
+function uploadExtInput(extensionValue=null, extension=null) {
+  if (extensionValue === extension) {
+    if (imageExists()) {
+      document.getElementById("ext-input-status").textContent = "Saved!";
+      sendAPI("http://127.0.0.1:8083/saveImage", 
+      function() {
+        const token = getToken();
+        const formData = new FormData();
+        formData.append("token", token);
+        formData.append("extension", extensionInput.value);
+        return formData;
+      }, function(xhttp) {
+        if (xhttp.status === 200) {
+          console.log("File successfully saved to the server.");
+          var response = xhttp.responseText;
+          const downloadHref = document.querySelector('.download');
+          downloadHref.href = response;
+          downloadLink.removeAttribute('disabled');
+        } else {
+          console.log("Error saving file to the server:", xhttp.status);
+        }
+      });
+    }else {
+      document.getElementById("ext-input-status").textContent = "Image not selected!";
+    }
+}
+}
+
+
+var matches = [
+  "png","jpeg","tga",
+    "bmp","tiff","pcx", 
+    "ico","webp","gif",
+    "ppm","xbm" 
+];
+function checkExtInput() {
+  const extensionInput = document.getElementById('extension-input');
+  var allExtensions = [
+    "png","jpeg","tga",
+    "bmp","tiff","pcx", 
+    "ico","webp","gif",
+    "ppm","xbm"   
+  ];
+  var extensionValue = extensionInput.value;
+  extensionValue = extensionValue.toLowerCase();
+  matches = [];
+  document.getElementById("ext-input-status").textContent = "Not selected!";
+
+  allExtensions.forEach(function(extension) {
+    if (extension.includes(extensionValue)) {
+      matches.push(extension)
+      uploadExtInput(extensionValue, extension);
+    }
+  });
+  
+  document.getElementById('available-extensions').textContent = matches.join(', ');
+}
+const extensionInput = document.getElementById('extension-input');
+  extensionInput.addEventListener('input', function(event) {
+  index = 0;
+  var allExtensions = [
+    "png","jpeg","tga",
+    "bmp","tiff","pcx", 
+    "ico","webp","gif",
+    "ppm","xbm" 
+  ];
+  var extensionValue = extensionInput.value;
+  extensionValue = extensionValue.toLowerCase();
+  matches = [];
+  document.getElementById("ext-input-status").textContent = "Not selected!";
+
+  allExtensions.forEach(function(extension) {
+    if (extension.includes(extensionValue)) {
+      matches.push(extension)
+      uploadExtInput(extensionValue, extension);
+    }
+  });
+  
+  document.getElementById('available-extensions').textContent = matches.join(', ');
+
+});
+
+var index = 0;
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Tab') {
+    if (document.activeElement === extensionInput) {
+      event.preventDefault();
+      document.getElementById("extension-input").value = matches[index];
+      if (index+1 !== matches.length) {
+        index += 1;
+      }else {
+        index = 0;
+      }
+      uploadExtInput();
+    }
+  }
+});
+
+
+extensionInput.addEventListener('blur', function() {
+  index = 0;
+});
 
 
 document.getElementById("image-upload").addEventListener("change", function(event) {
@@ -47,6 +171,8 @@ document.getElementById("image-upload").addEventListener("change", function(even
       xhttp.onload = function() {
         if (xhttp.status === 200) {
           console.log("File successfully uploaded to the server.");
+          extendLifeTime();
+          checkExtInput();
         } else {
           console.error('Request failed. Error code: ' + xhttp.status);
         }
@@ -70,10 +196,11 @@ function invertImage() {
       return formData;
     }, function(xhttp) {
       if (xhttp.status === 200) {
-        console.log("File successfully uploaded to the server.");
+        console.log("Image successfully inverted.");
         var response = xhttp.responseText;
   
         document.getElementById("preview-image").src = response + "?" + new Date().getTime();
+        checkExtInput();
       } else {
         console.log("Error uploading file to the server:", xhttp.status);
       }
@@ -82,27 +209,6 @@ function invertImage() {
   }
   }
   
-
-
-function extendLifeTime() {
-  sendAPI("http://127.0.0.1:8083/extendLifeTime",
-  function() {
-    const token = getToken();
-    const formData = new FormData();
-    formData.append("token", token);
-    return formData;
-  }, function(xhttp) {
-    if (xhttp.status === 200) {
-      console.log("Life time extended");
-    }else {
-      console.error('Request failed. Error code: ' + xhttp.status);
-    }
-  }
-)}
-  
-window.setInterval(() => {
-  extendLifeTime();
-}, 60000);
 
 let timeoutId;
 
@@ -136,10 +242,11 @@ function offsetRequest() {
       return formData;
     }, function(xhttp) {
       if (xhttp.status === 200) {
-        console.log('Request successful');
+        console.log('Offset request successful');
         var response = xhttp.responseText;
 
         document.getElementById("preview-image").src = response + "?" + new Date().getTime();
+        checkExtInput();
       } else {
         console.error('Request failed. Error code: ' + xhttp.status);
       }
@@ -159,7 +266,7 @@ function sumbitOffset() {
       return formData;
     }, function(xhttp) {
       if (xhttp.status === 200) {
-        console.log("Request successful");
+        console.log("Submit offset successful");
         var response = xhttp.responseText;
   
         document.getElementById("R-input").value = "";
@@ -167,6 +274,7 @@ function sumbitOffset() {
         document.getElementById("B-input").value = "";
   
         document.getElementById("preview-image").src = response + "?" + new Date().getTime();
+        checkExtInput();
       }else {
         console.error('Request failed. Error code: ' + xhttp.status);
       }
@@ -185,9 +293,10 @@ function undo() {
       return formData;
     }, function(xhttp) {
       if (xhttp.status === 200) {
-        console.log("Request successful");
+        console.log("Undo-request successful");
         var response = xhttp.responseText;
         document.getElementById("preview-image").src = response + "?" + new Date().getTime();
+        checkExtInput();
       }else {
         console.error('Request failed. Error code: ' + xhttp.status);
       }
@@ -205,9 +314,10 @@ function redo() {
       return formData;
     }, function(xhttp) {
       if (xhttp.status === 200) {
-        console.log("Request successful");
+        console.log("Redo-request successful");
         var response = xhttp.responseText;
         document.getElementById("preview-image").src = response + "?" + new Date().getTime();
+        checkExtInput();
       }else {
         console.error('Request failed. Error code: ' + xhttp.status);
       }
@@ -230,107 +340,3 @@ document.addEventListener('keydown', function(event) {
 var downloadLink = document.getElementById('downloadLink');
 downloadLink.setAttribute('disabled', 'disabled');
 
-var matches = [
-  "png","jpg","jpeg",
-  "bmp","tiff","tif",
-  "ico","webp","pbm",
-  "pgm","ppm","xbm",
-  "xv","ras","sr",
-  "tga","pcx","eps",
-  "ps","psd","tga"
-];
-const extensionInput = document.getElementById('extension-input');
-extensionInput.addEventListener('input', function(event) {
-  var allExtensions = [
-    "png","jpg","jpeg",
-    "bmp","tiff","tif",
-    "ico","webp","pbm",
-    "pgm","ppm","xbm",
-    "xv","ras","sr",
-    "tga","pcx","eps",
-    "ps","psd","tga"
-  ];
-  var extensionValue = extensionInput.value;
-  extensionValue = extensionValue.toLowerCase();
-  matches = [];
-  document.getElementById("ext-input-status").textContent = "Not selected!";
-
-  allExtensions.forEach(function(extension) {
-    if (extension.includes(extensionValue)) {
-      matches.push(extension)
-      if (extensionValue === extension) {
-        if (imageExists()) {
-          document.getElementById("ext-input-status").textContent = "Saved!";
-          sendAPI("http://127.0.0.1:8083/saveImage", 
-          function() {
-            const token = getToken();
-            const formData = new FormData();
-            formData.append("token", token);
-            formData.append("extension", extensionValue);
-            return formData;
-          }, function(xhttp) {
-            if (xhttp.status === 200) {
-              console.log("File successfully saved to the server.");
-              var response = xhttp.responseText;
-              const downloadHref = document.querySelector('.download');
-              downloadHref.href = response;
-              downloadLink.removeAttribute('disabled');
-            } else {
-              console.log("Error saving file to the server:", xhttp.status);
-            }
-          });
-        }else {
-          document.getElementById("ext-input-status").textContent = "Image not selected!";
-        }
-        
-      }
-    }
-  });
-  
-  document.getElementById('available-extensions').textContent = matches.join(', ');
-
-});
-var index = 0;
-
-document.addEventListener('keydown', function(event) {
-  if (event.key === 'Tab') {
-    if (document.activeElement === extensionInput) {
-      event.preventDefault();
-      document.getElementById("extension-input").value = matches[index];
-      if (index+1 !== matches.length) {
-        index += 1;
-      }else {
-        index = 0;
-      }
-      if (imageExists()) {
-        document.getElementById("ext-input-status").textContent = "Saved!";
-        sendAPI("http://127.0.0.1:8083/saveImage", 
-        function() {
-          const token = getToken();
-          const formData = new FormData();
-          formData.append("token", token);
-          formData.append("extension", extensionInput.value);
-          return formData;
-        }, function(xhttp) {
-          if (xhttp.status === 200) {
-            console.log("File successfully saved to the server.");
-            var response = xhttp.responseText;
-            const downloadHref = document.querySelector('.download');
-            downloadHref.href = response;
-            downloadLink.removeAttribute('disabled');
-          } else {
-            console.log("Error saving file to the server:", xhttp.status);
-          }
-        });
-      }else {
-        document.getElementById("ext-input-status").textContent = "Image not selected!";
-      }
-        
-      
-    }
-  }
-});
-
-extensionInput.addEventListener('blur', function() {
-  index = 0;
-});
