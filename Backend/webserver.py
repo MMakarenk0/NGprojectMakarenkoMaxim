@@ -60,7 +60,7 @@ def invertImage():
 def extendTime():
     token = request.form.get('token')
     currentTime = datetime.now()
-    tokens[token] = datetime.now() + timedelta(minutes=5)
+    tokens[token] = datetime.now() + timedelta(minutes=2)
 
     keysToRemove = []
 
@@ -68,9 +68,18 @@ def extendTime():
         if tokens[key] <= currentTime:
             if os.path.exists(f'../Frontend/static/images/{key}.bmp'):
                 os.remove(f'../Frontend/static/images/{key}.bmp')
-                keysToRemove.append(key)
-            else:
-                keysToRemove.append(key) 
+                print(f"{key}.bmp REMOVED!")
+            if os.path.exists(f'../Frontend/static/previewImages/{key}.bmp'):
+                os.remove(f'../Frontend/static/previewImages/{key}.bmp')
+                print(f"{key}.bmp REMOVED!")
+
+            savedImages = os.listdir("../Frontend/static/savedImages/")
+            for image in savedImages:
+                if key in image:
+                    os.remove(f"../Frontend/static/savedImages/{image}")
+                    print(image + "REMOVED!")
+            keysToRemove.append(key)
+            
 
     for key in keysToRemove:
         tokens.pop(key)    
@@ -98,7 +107,7 @@ def colorshift():
     # startTime = time.time()
 
     filePath = f"../Frontend/static/images/{token}.bmp"
-    previewPath = f"../Frontend/static/preview_images/{token}.bmp"
+    previewPath = f"../Frontend/static/previewImages/{token}.bmp"
     img = Image.open(filePath).convert('RGB')
     imageParts, width, height = cropImage(img)
     threadManager(threadNumber=4, func=imageColorShift, args=(imageParts, usersShifts[token],))
@@ -106,17 +115,15 @@ def colorshift():
     updateHistory(token, undoHistory, redoHistory, mergedImage.copy())
     # print(time.time()-startTime)
 
-    return f"/static/preview_images/{token}.bmp"
+    return f"/static/previewImages/{token}.bmp"
 
 @app.route('/submitOffset', methods=['POST'])
 def sumbitOffset():
     token = request.form.get('token')
-    if os.path.exists(f'../Frontend/static/images/{token}.bmp'):
+    if os.path.exists(f'../Frontend/static/images/{token}.bmp') and os.path.exists(f'../Frontend/static/previewImages/{token}.bmp'):
         os.remove(f'../Frontend/static/images/{token}.bmp')
-        shutil.move(f"../Frontend/static/preview_images/{token}.bmp", "../Frontend/static/images/")
-        return f'/static/images/{token}.bmp'
-    else:
-        return "File not found"
+        shutil.move(f"../Frontend/static/previewImages/{token}.bmp", "../Frontend/static/images/")
+    return f'/static/images/{token}.bmp'
 
 @app.route('/undo', methods=['POST'])
 def undo():
@@ -151,7 +158,19 @@ def saveImage():
     token = request.form.get('token')
     extension = request.form.get('extension')
 
-    savedImage = Image.open(f"../Frontend/static/images/{token}.bmp")
+    savedImages = os.listdir("../Frontend/static/savedImages/")
+    for image in savedImages:
+        if token in image:
+            os.remove(f"../Frontend/static/savedImages/{image}")
+
+    
+    match extension:
+        case "jpeg" | "pcx":
+            savedImage = Image.open(f"../Frontend/static/images/{token}.bmp").convert('RGB')
+        case "xbm":
+            savedImage = Image.open(f"../Frontend/static/images/{token}.bmp").convert('1')
+        case _:
+            savedImage = Image.open(f"../Frontend/static/images/{token}.bmp").convert('RGBA')
     savedImage.save(f"../Frontend/static/savedImages/{token}.{extension}", extension)
     return f"static/savedImages/{token}.{extension}"
 
